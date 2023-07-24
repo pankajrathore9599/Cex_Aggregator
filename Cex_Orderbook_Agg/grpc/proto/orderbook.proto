@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package orderbook;
+
+message Order {
+    string id = 1;
+    double price = 2;
+    double size = 3;
+}
+
+message GetTopOrdersRequest {
+    int32 top = 1; // The number of top bids/asks to return
+}
+
+message GetTopOrdersResponse {
+    repeated Order bids = 1;
+    repeated Order asks = 2;
+    double spread = 3;
+}
+
+service OrderBook {
+    rpc GetTopOrders (GetTopOrdersRequest) returns (GetTopOrdersResponse);
+}
