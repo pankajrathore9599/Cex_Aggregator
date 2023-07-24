@@ -14,6 +14,7 @@ pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Orde
     let url = Url::parse(BITSTAMP_WS_API)?;
 
     let (ws_stream, _response) = connect_async(url).await?;
+    println!("Connected to bitstamp stream.");
 
     let (mut socket, mut receiver) = ws_stream.split();
 
@@ -65,7 +66,7 @@ pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Orde
             },
             _ => (),
         }
-        sleep(Duration::from_millis(400)).await;
+        sleep(Duration::from_millis(200)).await;
     }
 
     Ok(())
