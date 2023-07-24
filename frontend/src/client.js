@@ -30,8 +30,8 @@ function getTopOrders() {
         if (error) {
             console.log('Error:', error);
         } else {
-            console.log('Asks:', response.asks);
-            console.log('Bids:', response.bids);
+            console.log('Top 10 Asks:', response.asks);
+            console.log('Top 10 Bids:', response.bids);
 
             // Assuming that asks and bids are sorted
             if(response.asks.length > 0 && response.bids.length > 0) {
