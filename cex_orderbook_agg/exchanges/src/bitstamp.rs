@@ -128,7 +128,7 @@ pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Orde
        let (tx, rx) = tokio::sync::oneshot::channel();
        let tx = Arc::new(tokio::sync::Mutex::new(Some(tx)));
    
-       let handle = tokio::spawn(simulate_get_bitstamp_order_book(order_book_clone, Arc::clone(&tx)));
+       let _handle = tokio::spawn(simulate_get_bitstamp_order_book(order_book_clone, Arc::clone(&tx)));
    
        // Wait for the simulate function to generate some data.
        let _ = rx.await;
