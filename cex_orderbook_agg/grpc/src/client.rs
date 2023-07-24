@@ -18,12 +18,12 @@ pub async fn print_top_orders(
 
     let response = client.get_top_orders(request).await?.into_inner();
 
-    println!("Bids:");
+    println!("Top 10 Bids:");
     for order in &response.bids {
         println!("Order: {:?}", order);
     }
 
-    println!("Asks:");
+    println!("To 10 Asks:");
     for order in &response.asks {
         println!("Order: {:?}", order);
     }
