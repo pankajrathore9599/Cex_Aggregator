@@ -1,13 +1,38 @@
+use exc_orderbook::combine_orderbook::combine_order_books;
 use exchanges::binance::get_binance_order_book;
 use exchanges::bitstamp::get_bitstamp_order_book;
-use exc_orderbook::combine_orderbook::combine_order_books;
+use std::sync::{Arc, Mutex};
 use tokio;
+use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() {
-    // Fetch the order books from Binance and Bitstamp
-    let binance_order_book = get_binance_order_book().await.expect("Failed to get Binance order book");
-    let bitstamp_order_book = get_bitstamp_order_book().await.expect("Failed to get Bitstamp order book");
+    let binance_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
+    let bitstamp_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
+
+    // Clone before moving into async blocks
+    let binance_order_book_clone = Arc::clone(&binance_order_book);
+    let bitstamp_order_book_clone = Arc::clone(&bitstamp_order_book);
+
+    // Spawn tasks
+    let binance_handle = tokio::spawn(async move {
+        get_binance_order_book(binance_order_book_clone).await.unwrap();
+    });
+
+    let bitstamp_handle = tokio::spawn(async move {
+        get_bitstamp_order_book(bitstamp_order_book_clone).await.unwrap();
+    });
+
+    // Give it some time to collect data.
+    sleep(Duration::from_secs(3)).await;
+
+    // Cancel the tasks.
+    binance_handle.abort();
+    bitstamp_handle.abort();
+
+    // Extract the fetched order books
+    let binance_order_book = binance_order_book.lock().unwrap().clone();
+    let bitstamp_order_book = bitstamp_order_book.lock().unwrap().clone();
 
     // Combine the order books
     let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], "ethbtc");

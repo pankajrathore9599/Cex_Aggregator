@@ -8,13 +8,20 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4.19"
+env_logger = "0.10.0"
 exc_orderbook = { path = "../exc_orderbook" }
 exchanges = { path = "../exchanges" }
 tonic = "0.9.2"
 prost = "0.11.9"
-tokio = { version = "1.29.1", features = ["macros","rt-multi-thread"] }
+tokio = { version = "1.29.1", features = ["full"] }
+tokio-tungstenite = { version = "0.19.0", features = ["native-tls"]}
 tokio-stream = "0.1.14"
 futures = "0.3.28"
+
+[dependencies.tungstenite]
+version = "*"
+features = ["native-tls"]
 
 [lib]
 name = "grpc"
