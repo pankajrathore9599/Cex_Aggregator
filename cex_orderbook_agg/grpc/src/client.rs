@@ -23,7 +23,7 @@ pub async fn print_top_orders(
         println!("Order: {:?}", order);
     }
 
-    println!("To 10 Asks:");
+    println!("Top 10 Asks:");
     for order in &response.asks {
         println!("Order: {:?}", order);
     }
