@@ -63,4 +63,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
-- Choose either APPROACH-1 or 2 based on your system configuration. The first approach is straightforward, while the second considers your specific file path. In my case, APPROACH-2 worked. If using APPROACH-2, update the path of your proto file to `/home/{yourusername}/Desktop/Github/Cex_Orderbook_Agg/grpc/proto/orderbook.proto`.
+- Choose either APPROACH-1 or 2 based on your system configuration. The first approach is straightforward, while the second considers your specific file path. In my case, APPROACH-1 worked. If using APPROACH-2, update the path of your proto file to `/home/{yourusername}/Desktop/Github/Cex_Orderbook_Agg/grpc/proto/orderbook.proto`.
