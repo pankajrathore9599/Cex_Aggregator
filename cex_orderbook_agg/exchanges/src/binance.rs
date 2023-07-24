@@ -94,7 +94,7 @@ pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order
                get_binance_order_book(order_book_clone).await.unwrap();
            });
    
-           // Wait for 5 seconds to collect some data.
+           // Wait for some seconds to collect some data.
            sleep(Duration::from_secs(2)).await;
    
            // Cancel the get_binance_order_book task.
