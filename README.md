@@ -2,36 +2,8 @@
 
 This Rust project is an aggregator for cryptocurrency exchange (CEX) order books. It fetches order book data from different exchanges (such as Binance and Bitstamp), combines the order books, and provides the combined top orders through a gRPC server.
 
-------------------------------
-### Project Structure
-
-/Cex_Orderbook_Agg
-├── Cargo.lock
-├── Cargo.toml
-├── exchanges
-│   ├── Cargo.toml
-│   └── src
-│       ├── binance.rs
-│       ├── bitstamp.rs
-│       └── lib.rs
-├── exc_orderbook
-│   ├── Cargo.toml
-│   └── src
-│       ├── combine_orderbook.rs
-│       └── lib.rs
-├── grpc
-│   ├── build.rs
-│   ├── Cargo.toml
-│   ├── proto
-│   │   └── orderbook.proto
-│   └── src
-│       ├── client.rs
-│       ├── lib.rs
-│       └── server.rs
-└── src
-    └── main.rs
 ----------------------------------------------
-### Setting-up your Project.
+### Setting up your Project.
 - Install `Rust`  [official Rust guide](https://www.rust-lang.org/tools/install)
 - Install `Protobuf`  [Install protoc](https://grpc.io/docs/protoc-installation/)
 - Clone the Repository.
@@ -40,7 +12,7 @@ This Rust project is an aggregator for cryptocurrency exchange (CEX) order books
 ### How to Test.
 -  To run the tests for the entire project, use `cargo test --workspace`.
 - To run the tests for a specific library, navigate to the library's directory and run `cargo test`.
--  Don't Forget to start server before test, because `grpc` lib tests will worked with running grpc server.
+-  Don't forget to start the server before the test, because `grpc` lib tests will be worked with running grpc server.
 
 -----------------------------------------------
 ### How to Run.
@@ -53,9 +25,9 @@ This Rust project is an aggregator for cryptocurrency exchange (CEX) order books
 
 --------------------------------------------------
 ### Error Guide.
-**If you got error's in building, so you have to follow these steps**
+**If you got error's in the building, so you have to follow these steps**
 -  We have to investigate the `build.rs`.
--  Path of build file is `Cex_Orderbook_Agg/grpc/build.rs`.
+-  Path of the build file is `Cex_Orderbook_Agg/grpc/build.rs`.
 -  Here is the code of `build.rs`
 ```
 // APPROACH - 1
@@ -65,7 +37,7 @@ This Rust project is an aggregator for cryptocurrency exchange (CEX) order books
 }
 
 // APPROACH - 2 If found any bugs in proto
-// pass your complete proto file address here to compile.
+//Pass your complete proto file address here to compile.
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_file = "/home/mrghost/Desktop/Rust/Aggregator/Cex_Orderbook_Agg/grpc/proto/orderbook.proto";
@@ -77,8 +49,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
--  Do Follow APPROACH-1 or 2 as per your system configuration. Here are two different build concept one is straight forward and second one is for path following concept. In my Case Approach-2 is working, in this you have to update your path of your proto file. `/home/{yourusername}/Desktop/Github/Cex_Orderbook_Agg/grpc/proto/orderbook.proto`
-Just check which one is work for you better.
+-  Do Follow APPROACH-1 or 2 as per your system configuration. Here are two different build concepts one is straightforward and the second one is for path the following concept. In my Case Approach-2 is working, in this you have to update the path of your proto file. `/home/{yourusername}/Desktop/Github/Cex_Orderbook_Agg/grpc/proto/orderbook.proto`
+Could you check which one works better for you?
 
 ----------------------------------------------------------------------------------------------
 
