@@ -1,6 +1,44 @@
 # Cex_Aggregator
 
 Cex_Aggregator is a Rust project that serves as an aggregator for cryptocurrency exchange (CEX) order books. The application fetches order book data from various exchanges such as Binance and Bitstamp, combines these order books, and provides the combined top orders via a gRPC server.
+---------------------------------
+## Project Architecture
+```
+├── cex_orderbook_agg
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   ├── exchanges
+│   │   ├── Cargo.toml
+│   │   └── src
+│   │       ├── binance.rs
+│   │       ├── bitstamp.rs
+│   │       └── lib.rs
+│   ├── exc_orderbook
+│   │   ├── Cargo.toml
+│   │   └── src
+│   │       ├── combine_orderbook.rs
+│   │       └── lib.rs
+│   ├── grpc
+│   │   ├── build.rs
+│   │   ├── Cargo.toml
+│   │   ├── proto
+│   │   │   └── orderbook.proto
+│   │   └── src
+│   │       ├── client.rs
+│   │       ├── lib.rs
+│   │       └── server.rs
+│   └── src
+│       └── main.rs
+├── frontend
+│   ├── package.json
+│   └── src
+│       ├── index.js
+│       ├── components
+│       └── ...
+├── LICENSE
+└── README.md
+
+```
 
 ---------------------------------
 ## Setup
