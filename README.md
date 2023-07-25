@@ -1,6 +1,7 @@
 # Cex_Aggregator
 
 Cex_Aggregator is a Rust project that serves as an aggregator for cryptocurrency exchange (CEX) order books. The application fetches order book data from various exchanges such as Binance and Bitstamp, combines these order books, and provides the combined top orders via a gRPC server.
+
 ---------------------------------
 ## Project Architecture
 ```
