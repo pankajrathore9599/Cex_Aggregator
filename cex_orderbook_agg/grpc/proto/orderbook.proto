@@ -9,7 +9,8 @@ message Order {
 }
 
 message GetTopOrdersRequest {
-    int32 top = 1; // The number of top bids/asks to return
+    string pair = 1; // The trading pair to return top bids/asks for
+    int32 top = 2; // The number of top bids/asks to return
 }
 
 message GetTopOrdersResponse {

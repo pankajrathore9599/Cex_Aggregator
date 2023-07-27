@@ -2,29 +2,39 @@ use exc_orderbook::combine_orderbook::combine_order_books;
 use exchanges::binance::get_binance_order_book;
 use exchanges::bitstamp::get_bitstamp_order_book;
 use std::sync::{Arc, Mutex};
+use std::env;
 use tokio;
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = env::args().collect();
+    let trading_pair: Arc<String> = if args.len() > 1 {
+        Arc::new(args[1].clone())
+    } else {
+        Arc::new(String::from("ethbtc"))
+    };
+
     let binance_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
     let bitstamp_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
 
     // Clone before moving into async blocks
     let binance_order_book_clone = Arc::clone(&binance_order_book);
     let bitstamp_order_book_clone = Arc::clone(&bitstamp_order_book);
+    let trading_pair_clone1 = Arc::clone(&trading_pair);
+    let trading_pair_clone2 = Arc::clone(&trading_pair);
 
     // Spawn tasks
     let binance_handle = tokio::spawn(async move {
-        get_binance_order_book(binance_order_book_clone).await.unwrap();
+        get_binance_order_book(binance_order_book_clone, &trading_pair_clone1).await.unwrap();
     });
 
     let bitstamp_handle = tokio::spawn(async move {
-        get_bitstamp_order_book(bitstamp_order_book_clone).await.unwrap();
+        get_bitstamp_order_book(bitstamp_order_book_clone, &trading_pair_clone2).await.unwrap();
     });
 
     // Give it some time to collect data.
-    sleep(Duration::from_secs(3)).await;
+    sleep(Duration::from_secs(10)).await;
 
     // Cancel the tasks.
     binance_handle.abort();
@@ -35,7 +45,7 @@ async fn main() {
     let bitstamp_order_book = bitstamp_order_book.lock().unwrap().clone();
 
     // Combine the order books
-    let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], "ethbtc");
+    let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], &*trading_pair);
 
     println!("Combined order book:");
     for order in &combined_order_books {

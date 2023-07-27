@@ -1,27 +1,28 @@
 use exc_orderbook::combine_orderbook::Order;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::connect_async;
-use futures_util::StreamExt; // for .next()
+use futures_util::StreamExt;
 use url::Url;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
-use tokio::{time::sleep, sync::futures}; // updated to async sleep
+use tokio::time::sleep;
 use std::time::Duration;
 
 static BITSTAMP_WS_API: &str = "wss://ws.bitstamp.net";
 
-pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order>)>>) -> Result<(), Box<dyn std::error::Error>> {
+// Added `pair` argument
+pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order>)>>, pair: &str) -> Result<(), Box<dyn std::error::Error>> {
     let url = Url::parse(BITSTAMP_WS_API)?;
 
     let (ws_stream, _response) = connect_async(url).await?;
-    println!("Connected to bitstamp stream.");
+    println!("Connected to {} bitstamp stream.", pair);
 
     let (mut socket, mut receiver) = ws_stream.split();
 
     let subscribe_msg = json!({
         "event": "bts:subscribe",
         "data": {
-            "channel": "order_book_ethbtc"
+            "channel": format!("order_book_{}", pair)  // Changed to format string with `pair`
         }
     });
 
@@ -43,14 +44,14 @@ pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Orde
                             let bid = bid.as_array().unwrap();
                             let price = bid[0].as_str().unwrap().parse::<f64>()?;
                             let size = bid[1].as_str().unwrap().parse::<f64>()?;
-                            bids.push(Order { exchange: "Bitstamp".into(), pair: "ethbtc".into(), price, size });
+                            bids.push(Order { exchange: "Bitstamp".into(), pair: pair.into(), price, size });  // Changed to use `pair`
                         }
 
                         for ask in asks_data.iter().take(20) {
                             let ask = ask.as_array().unwrap();
                             let price = ask[0].as_str().unwrap().parse::<f64>()?;
                             let size = ask[1].as_str().unwrap().parse::<f64>()?;
-                            asks.push(Order { exchange: "Bitstamp".into(), pair: "ethbtc".into(), price, size });
+                            asks.push(Order { exchange: "Bitstamp".into(), pair: pair.into(), price, size });  // Changed to use `pair`
                         }
 
                         let mut shared_order_book = order_book.lock().unwrap();
@@ -71,6 +72,7 @@ pub async fn get_bitstamp_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Orde
 
     Ok(())
 }
+
 
 
 

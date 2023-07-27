@@ -62,7 +62,7 @@ Cex_Aggregator is a Rust project that serves as an aggregator for cryptocurrency
 - Clone this repository to your local machine.
 - Ensure that Rust and Cargo are installed. If not, follow the [official Rust guide](https://www.rust-lang.org/tools/install).
 - Build the project using `cargo build`.
-- Navigate to the root of the project directory, `cex_orderbook_agg`, and execute `cargo run` to receive the combined order book of centralized exchanges, including the top 10 "Asks" and "Bids" with "Spread".
+- Navigate to the root of the project directory, `cex_orderbook_agg`, and execute `cargo run` to receive the combined order book of centralized exchanges, including the top 10 "Asks" and "Bids" with "Spread". By Default it will fetch `ethbtc` pairs feed. If you want to fetch any other pair data just pass pair like this `cargo run btcusdt` for other pairs.
 - Start the gRPC server using the command `cargo run --package grpc --bin server`. The server will provide live data at `0.0.0.0:50051`.
 - Start the Rust-based client to check live feeds from websockets. In another terminal from the root project directory (`cex_orderbook_agg`), execute the command `cargo run --package grpc --bin client`.
 

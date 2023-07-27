@@ -26,12 +26,13 @@ pub struct DepthStreamWrapper {
 
 static BINANCE_WS_API: &str = "wss://stream.binance.com:9443";
 
-pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order>)>>) -> Result<(), Box<dyn std::error::Error>> {
-    let binance_url = format!("{}/ws/ethbtc@depth20@100ms", BINANCE_WS_API);
+// Added `pair` argument
+pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order>)>>, pair: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let binance_url = format!("{}/ws/{}@depth20@100ms", BINANCE_WS_API, pair);
 
     let (mut socket, _) = connect_async(Url::parse(&binance_url).unwrap()).await.expect("Can't connect");
 
-    println!("Connected to binance stream.");
+    println!("Connected to {} binance stream.", pair);
 
     loop {
         let msg = socket.next().await;
@@ -45,7 +46,7 @@ pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order
                 for bid in parsed.bids {
                     bids.push(Order {
                         exchange: "binance".to_string(),
-                        pair: "ethbtc".to_string(),
+                        pair: pair.to_string(),
                         price: bid.price.parse().unwrap(),
                         size: bid.size.parse().unwrap(),
                     });
@@ -54,7 +55,7 @@ pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order
                 for ask in parsed.asks {
                     asks.push(Order {
                         exchange: "binance".to_string(),
-                        pair: "ethbtc".to_string(),
+                        pair: pair.to_string(),
                         price: ask.price.parse().unwrap(),
                         size: ask.size.parse().unwrap(),
                     });
@@ -79,33 +80,32 @@ pub async fn get_binance_order_book(order_book: Arc<Mutex<(Vec<Order>, Vec<Order
     TEST CASES    
    ------------*/
 
-   #[cfg(test)]
-   mod tests {
-       use super::*;
-       use std::sync::{Arc, Mutex};
-       use tokio::time::{sleep, Duration};
-   
-       #[tokio::test]
-       async fn test_get_binance_order_book() {
-           let order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
-           let order_book_clone = Arc::clone(&order_book);  // clone the Arc
-   
-           let handle = tokio::spawn(async move {
-               get_binance_order_book(order_book_clone).await.unwrap();
-           });
-   
-           // Wait for some seconds to collect some data.
-           sleep(Duration::from_secs(2)).await;
-   
-           // Cancel the get_binance_order_book task.
-           handle.abort();
-   
-           let (bids, asks) = order_book.lock().unwrap().clone();
-   
-           assert!(!bids.is_empty() || !asks.is_empty(), "Binance orders are empty");
-           println!("Binance order book (first 5 bids and asks):");
-           println!("Bids: {:?}", bids.iter().take(5).collect::<Vec<_>>());
-           println!("Asks: {:?}", asks.iter().take(5).collect::<Vec<_>>());
-       }
-   }
-   
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+    use tokio::time::{sleep, Duration};
+
+    #[tokio::test]
+    async fn test_get_binance_order_book() {
+        let order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
+        let order_book_clone = Arc::clone(&order_book);  // clone the Arc
+
+        let handle = tokio::spawn(async move {
+            get_binance_order_book(order_book_clone, "ethbtc").await.unwrap();
+        });
+
+        // Wait for some seconds to collect some data.
+        sleep(Duration::from_secs(2)).await;
+
+        // Cancel the get_binance_order_book task.
+        handle.abort();
+
+        let (bids, asks) = order_book.lock().unwrap().clone();
+
+        assert!(!bids.is_empty() || !asks.is_empty(), "Binance orders are empty");
+        println!("{} order book (first 5 bids and asks):", "ethbtc");
+        println!("Bids: {:?}", bids.iter().take(5).collect::<Vec<_>>());
+        println!("Asks: {:?}", asks.iter().take(5).collect::<Vec<_>>());
+    }
+}

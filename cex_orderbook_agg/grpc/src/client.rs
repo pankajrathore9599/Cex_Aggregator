@@ -1,3 +1,4 @@
+use std::env;
 use tonic::transport::Channel;
 use tonic::Request;
 
@@ -13,8 +14,9 @@ use crate::grpc::orderbook::GetTopOrdersRequest;
 pub async fn print_top_orders(
     mut client: OrderBookClient<Channel>,
     top: i32,
+    pair: String,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let request = Request::new(GetTopOrdersRequest { top });
+    let request = Request::new(GetTopOrdersRequest { top, pair });
 
     let response = client.get_top_orders(request).await?.into_inner();
 
@@ -36,14 +38,21 @@ pub async fn print_top_orders(
 
 #[tokio::main]
 pub async fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Please provide a trading pair as an argument");
+        std::process::exit(1);
+    }
+    let pair = args[1].clone();
+
     println!("Wait Client is connecting with gRPC Server...");
-    println!("Fethcing Data...");
+    println!("Fetching Data...");
 
     let channel = Channel::from_static("http://localhost:50051").connect().await.unwrap();
 
     let client = OrderBookClient::new(channel);
 
-    print_top_orders(client, 10).await.unwrap();
+    print_top_orders(client, 10, pair).await.unwrap();
 }
 
 /* ------------
@@ -59,7 +68,7 @@ mod tests {
         let channel = Channel::from_static("http://localhost:50051").connect().await.unwrap();
         let client = OrderBookClient::new(channel);
 
-        let result = print_top_orders(client, 5).await;
+        let result = print_top_orders(client, 5, "ethbtc".to_string()).await;
         
         assert!(result.is_ok()); // The function should complete successfully
     }

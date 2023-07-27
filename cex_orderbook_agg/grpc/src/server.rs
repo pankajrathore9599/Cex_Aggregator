@@ -21,25 +21,33 @@ pub struct MyServer {}
 
 #[tonic::async_trait]
 impl OrderBook for MyServer {
-    async fn get_top_orders(&self, request: Request<GetTopOrdersRequest>) -> Result<Response<GetTopOrdersResponse>, Status> {
-        let top = request.into_inner().top as usize;
+    async fn get_top_orders(
+        &self,
+        request: Request<GetTopOrdersRequest>,
+    ) -> Result<Response<GetTopOrdersResponse>, Status> {
+        let req = request.into_inner();
+        let top = req.top as usize;
+        let pair = req.pair;
 
         let binance_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
         let bitstamp_order_book = Arc::new(Mutex::new((Vec::new(), Vec::new())));
-
+      
         let binance_handle = {
             let binance_order_book = Arc::clone(&binance_order_book);
+            let pair = pair.clone(); // Clone the pair string
             tokio::spawn(async move {
-                get_binance_order_book(binance_order_book).await.unwrap();
+                get_binance_order_book(binance_order_book, &pair).await.unwrap();
             })
         };
-
+        
         let bitstamp_handle = {
             let bitstamp_order_book = Arc::clone(&bitstamp_order_book);
+            let pair = pair.clone(); // Clone the pair string again
             tokio::spawn(async move {
-                get_bitstamp_order_book(bitstamp_order_book).await.unwrap();
+                get_bitstamp_order_book(bitstamp_order_book, &pair).await.unwrap();
             })
         };
+        
 
         sleep(Duration::from_secs(5)).await;
 
@@ -49,7 +57,7 @@ impl OrderBook for MyServer {
         let binance_order_book = binance_order_book.lock().unwrap().clone();
         let bitstamp_order_book = bitstamp_order_book.lock().unwrap().clone();
 
-        let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], "ethbtc");
+        let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], &pair);
 
         let mut combined_order_books_sorted = combined_order_books.clone();
         combined_order_books_sorted.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
@@ -80,6 +88,7 @@ impl OrderBook for MyServer {
 }
 
 
+
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "0.0.0.0:50051".parse()?;
@@ -100,35 +109,36 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
    ------------*/
 
    #[cfg(test)]
-   mod tests {
-       use super::*;
-       use tokio::runtime::Runtime;
-   
-       #[test]
-       fn test_get_top_orders() {
-           let server = MyServer::default();
-           let request = Request::new(GetTopOrdersRequest { top: 5 }); // Replace 5 with a desired number
-   
-           let mut rt = Runtime::new().unwrap();
-   
-           // Since `get_top_orders` is async, we need to block on it to get a result
-           let result = rt.block_on(server.get_top_orders(request));
-           
-           match result {
-               Ok(response) => {
-                   let orders_response = response.into_inner();
-                   
-                   // Here you can write your assertions, for example:
-                   assert!(orders_response.asks.len() <= 5);
-                   assert!(orders_response.bids.len() <= 5);
-               },
-               Err(status) => {
-                   // This should not happen in a test case
-                   panic!("Received an error: {}", status);
-               },
-           }
-       }
-   }
+mod tests {
+    use super::*;
+    use tokio::runtime::Runtime;
+
+    #[test]
+    fn test_get_top_orders() {
+        let server = MyServer::default();
+        let request = Request::new(GetTopOrdersRequest { top: 5, pair: String::from("ethbtc") }); // Replace "ethbtc" with a desired trading pair
+
+        let mut rt = Runtime::new().unwrap();
+
+        // Since `get_top_orders` is async, we need to block on it to get a result
+        let result = rt.block_on(server.get_top_orders(request));
+        
+        match result {
+            Ok(response) => {
+                let orders_response = response.into_inner();
+                
+                // Here you can write your assertions, for example:
+                assert!(orders_response.asks.len() <= 5);
+                assert!(orders_response.bids.len() <= 5);
+            },
+            Err(status) => {
+                // This should not happen in a test case
+                panic!("Received an error: {}", status);
+            },
+        }
+    }
+}
+
    
    
    

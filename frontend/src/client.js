@@ -21,9 +21,9 @@ const orderbookProto = grpc.loadPackageDefinition(packageDefinition).orderbook;
 // Create a new client instance
 const client = new orderbookProto.OrderBook('localhost:50051', grpc.credentials.createInsecure());
 
-function getTopOrders() {
+function getTopOrders(pair) {
     // Define the request
-    const request = { top: 10 }; // Request top 10 orders
+    const request = { top: 10, pair: pair }; // Request top 10 orders for the given pair
 
     // Make the request
     client.getTopOrders(request, (error, response) => {
@@ -43,4 +43,5 @@ function getTopOrders() {
     });
 }
 
-setInterval(getTopOrders, 15000);
+const pair = process.argv[2] || 'ethbtc';  // get pair from command line argument or use 'ethbtc' as default
+setInterval(() => getTopOrders(pair), 15000);
