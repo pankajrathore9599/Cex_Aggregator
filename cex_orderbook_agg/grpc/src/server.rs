@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::time::{sleep, Duration};
@@ -10,7 +11,7 @@ use crate::orderbook::{
 use exchanges::binance::get_binance_order_book;
 use exchanges::bitstamp::get_bitstamp_order_book;
 use exc_orderbook::combine_orderbook::combine_order_books;
-use std::cmp::min;
+
 
 pub mod orderbook {
     tonic::include_proto!("orderbook"); // The string specified here must match the proto package name
@@ -60,13 +61,13 @@ impl OrderBook for MyServer {
         let combined_bids = combine_order_books(vec![(binance_bids, bitstamp_bids)], &pair);
 
         let mut asks = combined_asks.into_iter()
-        .map(|order| Order {
-            id: format!("{}-{}", order.exchange, order.pair),
-            price: order.price,
-            size: order.size,
-        })
-        .collect::<Vec<Order>>();
-    
+            .map(|order| Order {
+                id: format!("{}-{}", order.exchange, order.pair),
+                price: order.price,
+                size: order.size,
+            })
+            .collect::<Vec<Order>>();
+        
         let mut bids = combined_bids.into_iter()
             .map(|order| Order {
                 id: format!("{}-{}", order.exchange, order.pair),
@@ -75,11 +76,11 @@ impl OrderBook for MyServer {
             })
             .collect::<Vec<Order>>();
         
-        let top_asks = asks.clone().into_iter().take(top).collect::<Vec<Order>>();
-        let top_bids = bids.clone().into_iter().take(top).collect::<Vec<Order>>();
-        
         asks.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
         bids.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+        
+        let top_asks = asks[..min(top, asks.len())].to_vec();
+        let top_bids = bids[..min(top, bids.len())].to_vec();
         
         let spread = match (asks.first(), bids.first()) {
             (Some(best_ask), Some(best_bid)) => best_bid.price - best_ask.price,
@@ -88,6 +89,7 @@ impl OrderBook for MyServer {
             
         let reply = GetTopOrdersResponse { asks: top_asks, bids: top_bids, spread };
         Ok(Response::new(reply))
+    
         
     }
 }

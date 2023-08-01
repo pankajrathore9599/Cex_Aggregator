@@ -44,4 +44,4 @@ function getTopOrders(pair) {
 }
 
 const pair = process.argv[2] || 'ethbtc';  // get pair from command line argument or use 'ethbtc' as default
-setInterval(() => getTopOrders(pair), 15000);
+setInterval(() => getTopOrders(pair), 9000);
