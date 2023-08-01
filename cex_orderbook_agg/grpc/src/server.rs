@@ -34,7 +34,7 @@ impl OrderBook for MyServer {
       
         let binance_handle = {
             let binance_order_book = Arc::clone(&binance_order_book);
-            let pair = pair.clone(); // Clone the pair string
+            let pair = pair.clone();
             tokio::spawn(async move {
                 get_binance_order_book(binance_order_book, &pair).await.unwrap();
             })
@@ -42,52 +42,55 @@ impl OrderBook for MyServer {
         
         let bitstamp_handle = {
             let bitstamp_order_book = Arc::clone(&bitstamp_order_book);
-            let pair = pair.clone(); // Clone the pair string again
+            let pair = pair.clone();
             tokio::spawn(async move {
                 get_bitstamp_order_book(bitstamp_order_book, &pair).await.unwrap();
             })
         };
-        
 
         sleep(Duration::from_secs(5)).await;
 
         binance_handle.abort();
         bitstamp_handle.abort();
 
-        let binance_order_book = binance_order_book.lock().unwrap().clone();
-        let bitstamp_order_book = bitstamp_order_book.lock().unwrap().clone();
+        let (binance_bids, binance_asks) = binance_order_book.lock().unwrap().clone();
+        let (bitstamp_bids, bitstamp_asks) = bitstamp_order_book.lock().unwrap().clone();
 
-        let combined_order_books = combine_order_books(vec![binance_order_book, bitstamp_order_book], &pair);
+        let combined_asks = combine_order_books(vec![(binance_asks, bitstamp_asks)], &pair);
+        let combined_bids = combine_order_books(vec![(binance_bids, bitstamp_bids)], &pair);
 
-        let mut combined_order_books_sorted = combined_order_books.clone();
-        combined_order_books_sorted.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
-
-        let top_asks = combined_order_books_sorted.iter().take(min(top, combined_order_books_sorted.len())).map(|order| Order {
+        let mut asks = combined_asks.into_iter()
+        .map(|order| Order {
             id: format!("{}-{}", order.exchange, order.pair),
             price: order.price,
             size: order.size,
-        }).collect::<Vec<Order>>();
-
-        let mut combined_order_books_sorted_bids = combined_order_books.clone();
-        combined_order_books_sorted_bids.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
-
-        let top_bids = combined_order_books_sorted_bids.iter().take(min(top, combined_order_books_sorted_bids.len())).map(|order| Order {
-            id: format!("{}-{}", order.exchange, order.pair),
-            price: order.price,
-            size: order.size,
-        }).collect::<Vec<Order>>();
-
-        let spread = match (top_asks.first(), top_bids.first()) {
+        })
+        .collect::<Vec<Order>>();
+    
+        let mut bids = combined_bids.into_iter()
+            .map(|order| Order {
+                id: format!("{}-{}", order.exchange, order.pair),
+                price: order.price,
+                size: order.size,
+            })
+            .collect::<Vec<Order>>();
+        
+        let top_asks = asks.clone().into_iter().take(top).collect::<Vec<Order>>();
+        let top_bids = bids.clone().into_iter().take(top).collect::<Vec<Order>>();
+        
+        asks.sort_by(|a, b| a.price.partial_cmp(&b.price).unwrap());
+        bids.sort_by(|a, b| b.price.partial_cmp(&a.price).unwrap());
+        
+        let spread = match (asks.first(), bids.first()) {
             (Some(best_ask), Some(best_bid)) => best_bid.price - best_ask.price,
             _ => 0.0,
         };
-
+            
         let reply = GetTopOrdersResponse { asks: top_asks, bids: top_bids, spread };
         Ok(Response::new(reply))
+        
     }
 }
-
-
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -108,7 +111,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     TEST CASES    
    ------------*/
 
-   #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use tokio::runtime::Runtime;
@@ -118,7 +121,7 @@ mod tests {
         let server = MyServer::default();
         let request = Request::new(GetTopOrdersRequest { top: 5, pair: String::from("ethbtc") }); // Replace "ethbtc" with a desired trading pair
 
-        let mut rt = Runtime::new().unwrap();
+        let rt = Runtime::new().unwrap();
 
         // Since `get_top_orders` is async, we need to block on it to get a result
         let result = rt.block_on(server.get_top_orders(request));
@@ -138,7 +141,3 @@ mod tests {
         }
     }
 }
-
-   
-   
-   
