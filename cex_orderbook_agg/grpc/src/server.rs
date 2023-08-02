@@ -83,7 +83,7 @@ impl OrderBook for MyServer {
         let top_bids = bids[..min(top, bids.len())].to_vec();
         
         let spread = match (asks.first(), bids.first()) {
-            (Some(best_ask), Some(best_bid)) => best_bid.price - best_ask.price,
+            (Some(best_ask), Some(best_bid)) => best_ask.price - best_bid.price,
             _ => 0.0,
         };
             

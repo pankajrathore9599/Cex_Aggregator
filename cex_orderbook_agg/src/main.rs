@@ -76,7 +76,7 @@ async fn main() {
 
     // The spread is the difference between the best ask price and the best bid price.
     let spread = match (top_ten_asks.first(), top_ten_bids.first()) {
-        (Some(best_ask), Some(best_bid)) => best_bid.price - best_ask.price,
+        (Some(best_ask), Some(best_bid)) => best_ask.price - best_bid.price,
         _ => panic!("Unable to calculate spread"),
     };
     println!("Spread: {}", spread);
